@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<project>
+
+	<!-- 各メンバー固有のプロパティファイルの読み込み -->
+	<import file="build-common.xml" />
+
+
+
+	<!-- IDごとに月、時、購入額を集計 -->
+	<target name="run.SalesById" depends="prepare">
+		<sshexec host="${ssh.server}" username="${ssh.user}" keyfile="${ssh.key}" trust="yes"
+			command="hadoop jar main.jar posmining.enshu.SalesById s3://cspiral-posdata/"
+		/>
+	</target>
+
+	<!--
+	<target name="run.OnigiriCount" depends="prepare">
+		<sshexec host="${ssh.server}" username="${ssh.user}" keyfile="${ssh.key}" trust="yes"
+			command="hadoop jar main.jar posmining.example.OnigiriCount s3://cspiral-posdata/"
+		/>
+	</target>
+	-->
+
+
+
+	<!-- クラスタ実行のための準備タスク．プロジェクトをビルドしてJARに固めてSCPで送信する -->
+	<target name="prepare">
+
+		<mkdir dir="${build.path}" />
+
+		<path id="build.class.path">
+			<fileset dir="${hadoop.path}">
+				<include name="*.jar" />
+			</fileset>
+			<fileset dir="${hadoop.lib.path}">
+				<include name="*.jar" />
+			</fileset>
+		</path>
+
+		<javac encoding="utf-8"
+			srcdir="src"
+			destdir="${build.path}"
+			compiler="javac1.7"
+			includeantruntime="false"
+			debug="true">
+			<classpath refid="build.class.path" />
+		</javac>
+
+		<jar basedir="${build.path}" destfile="main.jar"/>
+
+		<scp file="main.jar"
+			todir="${ssh.user}:${ssh.pass}@${ssh.server}:~/."
+			keyfile="${ssh.key}"
+			trust = "yes" />
+	</target>
+
+</project>
