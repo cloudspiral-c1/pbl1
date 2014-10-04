@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<project>
+
+	<!-- 各メンバー固有のプロパティファイルの読み込み -->
+	<import file="build-common.xml" />
+
+
+
+	<!-- おにぎり種別総数 -->
+	<target name="run.OnigiriCountByType" depends="prepare">
+		<sshexec host="${ssh.server}" username="${ssh.user}" keyfile="${ssh.key}" trust="yes"
+			command="hadoop jar main.jar posmining.example.OnigiriCountByType s3://cspiral-posdata/"
+		/>
+	</target>
+
+	<!-- おにぎり総数 -->
+	<target name="run.OnigiriCount" depends="prepare">
+		<sshexec host="${ssh.server}" username="${ssh.user}" keyfile="${ssh.key}" trust="yes"
+			command="hadoop jar main.jar posmining.example.OnigiriCount s3://cspiral-posdata/"
+		/>
+	</target>
+
+	<!-- 性別の平均1段階目 -->
+	<target name="run.AveragePaymentBySex_1st" depends="prepare">
+		<sshexec host="${ssh.server}" username="${ssh.user}" keyfile="${ssh.key}" trust="yes"
+			command="hadoop jar main.jar posmining.enshu.AveragePaymentBySex_1st s3://cspiral-posdata/"
+		/>
+	</target>
+
+	<!-- 性別の平均2段階目 -->
+	<target name="run.AveragePaymentBySex_2nd" depends="prepare">
+		<sshexec host="${ssh.server}" username="${ssh.user}" keyfile="${ssh.key}" trust="yes"
+			command="hadoop jar main.jar posmining.enshu.AveragePaymentBySex_2nd /user/hadoop/out/PaymentByReceipt"
+		/>
+	</target>
+
+	<!-- 性別の平均 -->
+	<target name="run.AveragePaymentBySex" depends="prepare">
+		<sshexec host="${ssh.server}" username="${ssh.user}" keyfile="${ssh.key}" trust="yes"
+			command="hadoop jar main.jar posmining.enshu.AveragePaymentBySex s3://cspiral-posdata/"
+		/>
+	</target>
+
+
+	<!-- レシートで集計 -->
+	<target name="run.SalesById" depends="prepare">
+		<sshexec host="${ssh.server}" username="${ssh.user}" keyfile="${ssh.key}" trust="yes"
+			command="hadoop jar main.jar posmining.enshu.SalesById s3://cspiral-posdata/"
+		/>
+	</target>
+
+	<!-- 月ごとの客単価平均 -->
+	<target name="run.AveragePaymentByMonth" depends="prepare">
+		<sshexec host="${ssh.server}" username="${ssh.user}" keyfile="${ssh.key}" trust="yes"
+			command="hadoop jar main.jar posmining.enshu.AveragePaymentByMonth /user/hadoop/out/salesById"
+		/>
+	</target>
+
+	<!-- クラスタ実行のための準備タスク．プロジェクトをビルドしてJARに固めてSCPで送信する -->
+	<target name="prepare">
+
+		<mkdir dir="${build.path}" />
+
+		<path id="build.class.path">
+			<fileset dir="${hadoop.path}">
+				<include name="*.jar" />
+			</fileset>
+			<fileset dir="${hadoop.lib.path}">
+				<include name="*.jar" />
+			</fileset>
+		</path>
+
+		<javac encoding="utf-8"
+			srcdir="src"
+			destdir="${build.path}"
+			compiler="javac1.7"
+			includeantruntime="false"
+			debug="true">
+			<classpath refid="build.class.path" />
+		</javac>
+
+		<jar basedir="${build.path}" destfile="main.jar"/>
+
+		<scp file="main.jar"
+			todir="${ssh.user}:${ssh.pass}@${ssh.server}:~/."
+			keyfile="${ssh.key}"
+			trust = "yes" />
+	</target>
+
+</project>
